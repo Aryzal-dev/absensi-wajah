@@ -740,6 +740,7 @@ const App = {
               Periode: <b>${lv.start_date}</b> s/d <b>${lv.end_date}</b>
             </p>
             <p style="font-size:13px">${lv.reason}</p>
+            ${this.renderAttachmentHtml(lv.attachment, `Lampiran: ${lv.type}`)}
           </div>
         `;
         })
@@ -747,6 +748,43 @@ const App = {
     } catch (err) {
       listEl.innerHTML = `<p style="color:var(--danger)">Gagal memuat: ${err.message}</p>`;
     }
+  },
+
+  renderAttachmentHtml(attachment, title = 'Lampiran Bukti') {
+    if (!attachment) return '';
+
+    const isPdf = attachment.toLowerCase().endsWith('.pdf');
+    if (isPdf) {
+      return `
+        <div style="margin-top:10px;padding:8px 12px;background:var(--bg-card-inner);border:1px solid var(--bg-card-border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:20px">📄</span>
+            <div>
+              <b style="font-size:13px;display:block">Dokumen Lampiran (PDF)</b>
+              <small style="color:var(--text-muted)">Surat dokter / dokumen bukti izin</small>
+            </div>
+          </div>
+          <a href="${attachment}" target="_blank" class="btn btn-primary" style="padding:5px 12px;font-size:12px;text-decoration:none">
+            📄 Buka PDF
+          </a>
+        </div>
+      `;
+    }
+
+    return `
+      <div style="margin-top:10px;padding:8px 12px;background:var(--bg-card-inner);border:1px solid var(--bg-card-border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <img src="${attachment}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--bg-card-border);cursor:pointer" onclick="App.previewPhoto('${attachment}', '${title}')" title="Klik untuk perbesar">
+          <div>
+            <b style="font-size:13px;display:block">Foto Surat Dokter / Bukti Lampiran</b>
+            <small style="color:var(--text-muted)">Klik gambar untuk memperbesar</small>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="padding:5px 12px;font-size:12px" onclick="App.previewPhoto('${attachment}', '${title}')">
+          🔍 Lihat Foto
+        </button>
+      </div>
+    `;
   },
 
   // ========== ADMIN: DASHBOARD MONITOR ==========
@@ -801,11 +839,16 @@ const App = {
     }
   },
 
-  previewPhoto(url) {
+  previewPhoto(url, title = 'Bukti Foto / Lampiran') {
     const modal = document.getElementById('previewModal');
     const img = document.getElementById('previewImage');
-    img.src = url;
-    modal.classList.add('open');
+    const titleEl = document.getElementById('previewModalTitle');
+    const linkEl = document.getElementById('previewDownloadLink');
+
+    if (titleEl) titleEl.textContent = title;
+    if (img) img.src = url;
+    if (linkEl) linkEl.href = url;
+    if (modal) modal.classList.add('open');
   },
 
   // ========== ADMIN: APPROVAL IZIN ==========
@@ -830,15 +873,18 @@ const App = {
               <button class="btn btn-danger" style="padding:6px 14px;font-size:12px" onclick="App.reviewLeave(${lv.id}, 'ditolak')">Tolak</button>
             </div>
           `
-            : `<small style="color:var(--text-dim)">Diperiksa oleh: ${lv.reviewer_name || 'Admin'} (${lv.status})</small>`;
+            : `<small style="color:var(--text-dim);display:block;margin-top:10px">Diperiksa oleh: ${lv.reviewer_name || 'Admin'} (${lv.status})</small>`;
+
+          const attachmentHtml = this.renderAttachmentHtml(lv.attachment, `Lampiran: ${lv.user_name} (${lv.type})`);
 
           return `
           <div class="card" style="margin-bottom:12px">
             <div style="display:flex;justify-content:space-between;align-items:flex-start">
-              <div>
+              <div style="flex:1">
                 <b>${lv.user_name}</b> <small style="color:var(--text-muted)">(${lv.nip})</small>
                 <div style="font-size:13px;color:var(--accent);margin:4px 0;text-transform:capitalize"><b>${lv.type}</b>: ${lv.start_date} s/d ${lv.end_date}</div>
                 <p style="font-size:13px">${lv.reason}</p>
+                ${attachmentHtml}
               </div>
               <span class="badge ${lv.status === 'disetujui' ? 'badge-hadir' : lv.status === 'ditolak' ? 'badge-alpa' : 'badge-belum'}">${lv.status}</span>
             </div>
