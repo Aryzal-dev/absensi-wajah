@@ -604,16 +604,8 @@ const App = {
     const monthEl = document.getElementById('userHistoryMonth');
     const yearEl = document.getElementById('userHistoryYear');
 
-    const now = new Date();
-    if (monthEl && !monthEl.dataset.userChanged) {
-      monthEl.value = String(now.getMonth() + 1);
-    }
-    if (yearEl && !yearEl.dataset.userChanged) {
-      yearEl.value = String(now.getFullYear());
-    }
-
-    const month = monthEl ? monthEl.value : now.getMonth() + 1;
-    const year = yearEl ? yearEl.value : now.getFullYear();
+    const month = monthEl ? monthEl.value : (new Date().getMonth() + 1);
+    const year = yearEl ? yearEl.value : new Date().getFullYear();
 
     container.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:20px 0">Memuat rekapan riwayat...</p>';
 
@@ -912,17 +904,7 @@ const App = {
 
   // ========== ADMIN: REKAP BULANAN & PAYROLL ==========
   async loadAdminReport() {
-    const monthEl = document.getElementById('adminRekapMonth');
-    const yearEl = document.getElementById('adminRekapYear');
     const empSelect = document.getElementById('adminRekapEmployeeSelect');
-
-    const now = new Date();
-    if (monthEl && !monthEl.dataset.userChanged) {
-      monthEl.value = String(now.getMonth() + 1);
-    }
-    if (yearEl && !yearEl.dataset.userChanged) {
-      yearEl.value = String(now.getFullYear());
-    }
 
     // Muat daftar opsi karyawan jika baru pertama kali
     if (empSelect && empSelect.options.length <= 1) {
@@ -948,9 +930,6 @@ const App = {
     const monthEl = document.getElementById('adminRekapMonth');
     const yearEl = document.getElementById('adminRekapYear');
     const empSelect = document.getElementById('adminRekapEmployeeSelect');
-
-    if (monthEl) monthEl.dataset.userChanged = 'true';
-    if (yearEl) yearEl.dataset.userChanged = 'true';
 
     const month = monthEl ? monthEl.value : (new Date().getMonth() + 1);
     const year = yearEl ? yearEl.value : new Date().getFullYear();
