@@ -267,14 +267,16 @@ const App = {
     if (authView) authView.style.display = 'none';
     if (appShell) appShell.style.display = 'block';
 
-    // Update Header Info
-    const avatarEl = document.getElementById('headerAvatar');
-    const nameEl = document.getElementById('headerUserName');
-    const roleEl = document.getElementById('headerUserRole');
+    // Update Profil Karyawan di Halaman Absen
+    const absenAvatar = document.getElementById('absenAvatar');
+    const absenName = document.getElementById('absenUserName');
+    const absenRole = document.getElementById('absenUserRole');
+    const absenNip = document.getElementById('absenUserNip');
 
-    if (avatarEl) avatarEl.textContent = this.state.user.name.charAt(0).toUpperCase();
-    if (nameEl) nameEl.textContent = this.state.user.name;
-    if (roleEl) roleEl.textContent = this.state.user.role === 'admin' ? 'Admin' : (this.state.user.position || 'Karyawan');
+    if (absenAvatar) absenAvatar.textContent = this.state.user.name.charAt(0).toUpperCase();
+    if (absenName) absenName.textContent = this.state.user.name;
+    if (absenRole) absenRole.textContent = this.state.user.position || (this.state.user.role === 'admin' ? 'Admin' : 'Karyawan');
+    if (absenNip) absenNip.textContent = `NIP: ${this.state.user.nip}`;
 
     // Render Navigation
     this.renderNavigation();
