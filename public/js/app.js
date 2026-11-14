@@ -603,8 +603,12 @@ const App = {
     const yearEl = document.getElementById('userHistoryYear');
 
     const now = new Date();
-    if (monthEl && !monthEl.value) monthEl.value = String(now.getMonth() + 1);
-    if (yearEl && !yearEl.value) yearEl.value = String(now.getFullYear());
+    if (monthEl && !monthEl.dataset.userChanged) {
+      monthEl.value = String(now.getMonth() + 1);
+    }
+    if (yearEl && !yearEl.dataset.userChanged) {
+      yearEl.value = String(now.getFullYear());
+    }
 
     const month = monthEl ? monthEl.value : now.getMonth() + 1;
     const year = yearEl ? yearEl.value : now.getFullYear();
@@ -865,8 +869,12 @@ const App = {
     const empSelect = document.getElementById('adminRekapEmployeeSelect');
 
     const now = new Date();
-    if (monthEl && !monthEl.value) monthEl.value = String(now.getMonth() + 1);
-    if (yearEl && !yearEl.value) yearEl.value = String(now.getFullYear());
+    if (monthEl && !monthEl.dataset.userChanged) {
+      monthEl.value = String(now.getMonth() + 1);
+    }
+    if (yearEl && !yearEl.dataset.userChanged) {
+      yearEl.value = String(now.getFullYear());
+    }
 
     // Muat daftar opsi karyawan jika baru pertama kali
     if (empSelect && empSelect.options.length <= 1) {
@@ -876,6 +884,8 @@ const App = {
           const opt = document.createElement('option');
           opt.value = emp.id;
           opt.textContent = `👤 ${emp.name} (${emp.nip} - ${emp.position || 'Karyawan'})`;
+          opt.style.color = '#f8fafc';
+          opt.style.backgroundColor = '#161f30';
           empSelect.appendChild(opt);
         });
       } catch (e) {
@@ -890,6 +900,9 @@ const App = {
     const monthEl = document.getElementById('adminRekapMonth');
     const yearEl = document.getElementById('adminRekapYear');
     const empSelect = document.getElementById('adminRekapEmployeeSelect');
+
+    if (monthEl) monthEl.dataset.userChanged = 'true';
+    if (yearEl) yearEl.dataset.userChanged = 'true';
 
     const month = monthEl ? monthEl.value : (new Date().getMonth() + 1);
     const year = yearEl ? yearEl.value : new Date().getFullYear();

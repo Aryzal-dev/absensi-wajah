@@ -16,6 +16,7 @@ data/*.db-shm
 # Uploads
 uploads/selfies/*
 uploads/leaves/*
+uploads/docs/*
 !uploads/selfies/.gitkeep
 !uploads/leaves/.gitkeep
 
