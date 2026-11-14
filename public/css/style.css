@@ -641,3 +641,123 @@ input, select, textarea { font-family: inherit; color: var(--text-main); }
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.3; transform: scale(1.3); }
 }
+
+/* Filter Bar & Kontrol Rekap */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--bg-card-border);
+  border-radius: var(--radius-md);
+}
+
+.filter-bar select, .filter-bar input {
+  padding: 8px 12px;
+  background: var(--bg-card-inner);
+  border: 1px solid var(--bg-card-border);
+  color: var(--text-main);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  outline: none;
+}
+
+.filter-bar select:focus, .filter-bar input:focus {
+  border-color: var(--primary);
+}
+
+/* Stat Grid untuk Rekap Karyawan */
+.rekap-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.rekap-stat-box {
+  background: var(--bg-card-inner);
+  border: 1px solid var(--bg-card-border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  text-align: center;
+}
+
+.rekap-stat-box small {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.rekap-stat-box span {
+  font-size: 18px;
+  font-weight: 700;
+  display: block;
+}
+
+/* Foto Selfie Thumbnail di Tabel */
+.table-selfie-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid var(--bg-card-border);
+  cursor: pointer;
+  vertical-align: middle;
+  transition: transform 0.2s;
+}
+
+.table-selfie-thumb:hover {
+  transform: scale(1.2);
+  border-color: var(--primary);
+}
+
+/* Mode Print Laporan Rekapitulasi */
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .header, .nav-bottom, .btn, .filter-bar, .modal-overlay, #btnLogout, .btn-close {
+    display: none !important;
+  }
+  .container {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .card {
+    background: #fff !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    color: #000 !important;
+  }
+  .rekap-stat-box {
+    background: #f8fafc !important;
+    border: 1px solid #ccc !important;
+    color: #000 !important;
+  }
+  .table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    color: #000 !important;
+  }
+  .table th, .table td {
+    border: 1px solid #ccc !important;
+    padding: 6px 8px !important;
+    color: #000 !important;
+    font-size: 11px !important;
+  }
+  .table-selfie-thumb {
+    display: none !important;
+  }
+  .badge {
+    border: 1px solid #999 !important;
+    color: #000 !important;
+    background: transparent !important;
+  }
+}

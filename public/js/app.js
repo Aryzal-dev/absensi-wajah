@@ -599,35 +599,76 @@ const App = {
     const container = document.getElementById('historyList');
     if (!container) return;
 
-    container.innerHTML = '<p style="text-align:center;color:var(--text-dim)">Memuat riwayat...</p>';
+    const monthEl = document.getElementById('userHistoryMonth');
+    const yearEl = document.getElementById('userHistoryYear');
+
+    const now = new Date();
+    if (monthEl && !monthEl.value) monthEl.value = String(now.getMonth() + 1);
+    if (yearEl && !yearEl.value) yearEl.value = String(now.getFullYear());
+
+    const month = monthEl ? monthEl.value : now.getMonth() + 1;
+    const year = yearEl ? yearEl.value : now.getFullYear();
+
+    container.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:20px 0">Memuat rekapan riwayat...</p>';
 
     try {
-      const res = await API.get('/api/attendance/history');
-      if (res.attendances.length === 0) {
-        container.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:24px 0">Belum ada riwayat absensi bulan ini.</p>';
+      const res = await API.get(`/api/reports/employee/${this.state.user.id}?year=${year}&month=${month}`);
+      
+      // Update Summary Cards
+      const summaryBox = document.getElementById('userHistorySummary');
+      if (summaryBox) {
+        summaryBox.style.display = 'grid';
+        document.getElementById('statUserHadir').textContent = `${res.summary.hadir} Hari`;
+        document.getElementById('statUserTelat').textContent = `${res.summary.telat} Hari (${res.summary.totalMenitTelat}m)`;
+        document.getElementById('statUserLembur').textContent = `${res.summary.totalMenitLembur} Menit`;
+        document.getElementById('statUserIzin').textContent = `${res.summary.totalIzinDays} Hari`;
+      }
+
+      if (res.logs.length === 0) {
+        container.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:24px 0">Belum ada riwayat absensi pada bulan yang dipilih.</p>';
         return;
       }
 
-      container.innerHTML = res.attendances
-        .map((att) => {
-          const date = new Date(att.date);
-          const dateFormatted = date.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
-          const inTime = att.check_in_time ? new Date(att.check_in_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '--:--';
-          const outTime = att.check_out_time ? new Date(att.check_out_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+      container.innerHTML = res.logs
+        .map((log) => {
+          const date = new Date(log.date);
+          const dateFormatted = date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+          const badgeClass = log.status === 'telat' ? 'badge-telat' : 'badge-hadir';
 
-          const badgeClass = att.status === 'telat' ? 'badge-telat' : 'badge-hadir';
-          const statusText = att.status === 'telat' ? `Telat ${att.late_minutes}m` : 'Tepat Waktu';
+          const inPhotoHtml = log.in_photo ? `<img class="table-selfie-thumb" src="${log.in_photo}" onclick="App.previewPhoto('${log.in_photo}')" title="Lihat Foto Masuk">` : '';
+          const outPhotoHtml = log.out_photo ? `<img class="table-selfie-thumb" src="${log.out_photo}" onclick="App.previewPhoto('${log.out_photo}')" title="Lihat Foto Pulang">` : '';
 
           return `
-          <div class="card" style="margin-bottom:10px;padding:14px">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-              <b>${dateFormatted}</b>
-              <span class="badge ${badgeClass}">${statusText}</span>
+          <div class="card" style="margin-bottom:12px;padding:16px;border-left:4px solid ${log.status === 'telat' ? 'var(--warning)' : 'var(--success)'}">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <div>
+                <b>${dateFormatted}</b>
+                <small style="display:block;color:var(--text-muted);font-size:12px">${log.shift_name || 'Shift Reguler'}</small>
+              </div>
+              <span class="badge ${badgeClass}">${log.status_label}</span>
             </div>
-            <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-muted)">
-              <span>Masuk: <b style="color:var(--text-main)">${inTime}</b></span>
-              <span>Pulang: <b style="color:var(--text-main)">${outTime}</b></span>
-              <span>Jarak: <b style="color:var(--text-main)">${att.check_in_distance != null ? att.check_in_distance + 'm' : '-'}</b></span>
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;background:var(--bg-card-inner);padding:10px;border-radius:var(--radius-sm)">
+              <div>
+                <small style="color:var(--text-muted);display:block">Jam Masuk</small>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+                  ${inPhotoHtml}
+                  <b style="color:var(--text-main);font-size:14px">${log.in_time || '--:--'}</b>
+                </div>
+              </div>
+              <div>
+                <small style="color:var(--text-muted);display:block">Jam Pulang</small>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+                  ${outPhotoHtml}
+                  <b style="color:var(--text-main);font-size:14px">${log.out_time || '--:--'}</b>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:12px;color:var(--text-muted)">
+              <span>Durasi: <b style="color:var(--text-main)">${log.duration_text}</b></span>
+              <span>Lembur: <b style="color:var(--accent)">${log.overtime_minutes}m</b></span>
+              <span>GPS: <b style="color:var(--text-main)">${log.distance != null ? log.distance + 'm' : '-'}</b></span>
             </div>
           </div>
         `;
@@ -819,33 +860,204 @@ const App = {
 
   // ========== ADMIN: REKAP BULANAN & PAYROLL ==========
   async loadAdminReport() {
+    const monthEl = document.getElementById('adminRekapMonth');
+    const yearEl = document.getElementById('adminRekapYear');
+    const empSelect = document.getElementById('adminRekapEmployeeSelect');
+
+    const now = new Date();
+    if (monthEl && !monthEl.value) monthEl.value = String(now.getMonth() + 1);
+    if (yearEl && !yearEl.value) yearEl.value = String(now.getFullYear());
+
+    // Muat daftar opsi karyawan jika baru pertama kali
+    if (empSelect && empSelect.options.length <= 1) {
+      try {
+        const empRes = await API.get('/api/employees');
+        empRes.employees.forEach((emp) => {
+          const opt = document.createElement('option');
+          opt.value = emp.id;
+          opt.textContent = `👤 ${emp.name} (${emp.nip} - ${emp.position || 'Karyawan'})`;
+          empSelect.appendChild(opt);
+        });
+      } catch (e) {
+        console.warn('Gagal memuat list karyawan untuk filter rekap:', e);
+      }
+    }
+
+    this.handleRekapFilterChange();
+  },
+
+  async handleRekapFilterChange() {
+    const monthEl = document.getElementById('adminRekapMonth');
+    const yearEl = document.getElementById('adminRekapYear');
+    const empSelect = document.getElementById('adminRekapEmployeeSelect');
+
+    const month = monthEl ? monthEl.value : (new Date().getMonth() + 1);
+    const year = yearEl ? yearEl.value : new Date().getFullYear();
+    const selectedEmp = empSelect ? empSelect.value : 'all';
+
+    const allContainer = document.getElementById('rekapAllContainer');
+    const detailContainer = document.getElementById('rekapDetailContainer');
+
+    if (selectedEmp === 'all') {
+      if (allContainer) allContainer.style.display = 'block';
+      if (detailContainer) detailContainer.style.display = 'none';
+      this.loadAllEmployeesReport(year, month);
+    } else {
+      if (allContainer) allContainer.style.display = 'none';
+      if (detailContainer) detailContainer.style.display = 'block';
+      this.loadEmployeeDetailRekap(selectedEmp, year, month);
+    }
+  },
+
+  async loadAllEmployeesReport(year, month) {
     const tableBody = document.getElementById('reportTableBody');
     if (!tableBody) return;
 
+    tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-dim);padding:24px">Memuat data rekap bulanan...</td></tr>';
+
     try {
-      const res = await API.get('/api/reports/monthly');
+      const res = await API.get(`/api/reports/monthly?year=${year}&month=${month}`);
+      if (res.report.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-dim);padding:24px">Tidak ada data karyawan aktif.</td></tr>';
+        return;
+      }
+
       tableBody.innerHTML = res.report
         .map(
           (r) => `
         <tr>
-          <td><b>${r.name}</b><small style="display:block;color:var(--text-muted)">${r.nip}</small></td>
+          <td><b>${r.name}</b><small style="display:block;color:var(--text-muted)">${r.nip} • ${r.position || '-'}</small></td>
           <td><b>${r.hadir}</b> hr</td>
           <td><span style="color:${r.telat > 0 ? 'var(--warning)' : 'inherit'}">${r.telat} hr (${r.totalMenitTelat}m)</span></td>
           <td>${r.totalIzin} hr</td>
           <td>Rp${r.totalTunjangan.toLocaleString('id-ID')}</td>
           <td><span style="color:var(--danger)">-Rp${r.totalPotongan.toLocaleString('id-ID')}</span></td>
           <td><b style="color:var(--success)">Rp${r.estimasiBersih.toLocaleString('id-ID')}</b></td>
+          <td>
+            <button class="btn btn-primary" style="padding:4px 10px;font-size:12px;white-space:nowrap" onclick="App.viewEmployeeRekap(${r.userId})">
+              🔍 Rincian
+            </button>
+          </td>
         </tr>
       `
         )
         .join('');
     } catch (err) {
-      this.showToast('Gagal memuat rekap: ' + err.message, 'danger');
+      tableBody.innerHTML = `<tr><td colspan="8" style="color:var(--danger);text-align:center;padding:16px">Gagal memuat rekap: ${err.message}</td></tr>`;
+    }
+  },
+
+  async loadEmployeeDetailRekap(employeeId, year, month) {
+    const tableBody = document.getElementById('rekapDetailTableBody');
+    if (!tableBody) return;
+
+    tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-dim);padding:24px">Memuat rekapan harian karyawan...</td></tr>';
+
+    try {
+      const res = await API.get(`/api/reports/employee/${employeeId}?year=${year}&month=${month}`);
+
+      // Set Info Karyawan
+      const nameEl = document.getElementById('rekapDetailName');
+      const metaEl = document.getElementById('rekapDetailMeta');
+      if (nameEl) nameEl.textContent = res.user.name;
+      if (metaEl) {
+        const monthNames = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        metaEl.textContent = `NIP: ${res.user.nip} • Jabatan: ${res.user.position || '-'} • Shift: ${res.user.shift_name || 'Reguler'} • Periode: ${monthNames[parseInt(month, 10)]} ${year}`;
+      }
+
+      // Set Statistik
+      document.getElementById('rdStatHadir').textContent = `${res.summary.hadir} Hari`;
+      document.getElementById('rdStatTelat').textContent = `${res.summary.telat} Hari`;
+      document.getElementById('rdStatMenitTelat').textContent = `${res.summary.totalMenitTelat} Menit`;
+      document.getElementById('rdStatLembur').textContent = `${res.summary.totalMenitLembur} Menit`;
+      document.getElementById('rdStatIzin').textContent = `${res.summary.totalIzinDays} Hari`;
+      document.getElementById('rdStatJamKerja').textContent = `${res.summary.totalJamKerja} Jam`;
+
+      if (res.logs.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-dim);padding:24px">Belum ada riwayat absensi pada bulan ini.</td></tr>';
+        return;
+      }
+
+      tableBody.innerHTML = res.logs
+        .map((log) => {
+          const date = new Date(log.date);
+          const dateFormatted = date.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
+          const badgeClass = log.status === 'telat' ? 'badge-telat' : 'badge-hadir';
+
+          const inPhotoHtml = log.in_photo
+            ? `<img class="table-selfie-thumb" src="${log.in_photo}" onclick="App.previewPhoto('${log.in_photo}')" title="Klik foto masuk">`
+            : '-';
+          const outPhotoHtml = log.out_photo
+            ? `<img class="table-selfie-thumb" src="${log.out_photo}" onclick="App.previewPhoto('${log.out_photo}')" title="Klik foto pulang">`
+            : '-';
+
+          return `
+          <tr>
+            <td><b>${dateFormatted}</b><small style="display:block;color:var(--text-muted)">${log.date}</small></td>
+            <td><small>${log.shift_name || '-'}</small></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px">
+                ${inPhotoHtml}
+                <b>${log.in_time || '--:--'}</b>
+              </div>
+            </td>
+            <td><span class="badge ${badgeClass}">${log.status_label}</span></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px">
+                ${outPhotoHtml}
+                <b>${log.out_time || '--:--'}</b>
+              </div>
+            </td>
+            <td><b>${log.duration_text}</b></td>
+            <td><span style="color:${log.overtime_minutes > 0 ? 'var(--accent)' : 'inherit'}">${log.overtime_minutes}m</span></td>
+            <td><small>${log.distance != null ? log.distance + 'm' : '-'}</small></td>
+          </tr>
+        `;
+        })
+        .join('');
+    } catch (err) {
+      tableBody.innerHTML = `<tr><td colspan="8" style="color:var(--danger);text-align:center;padding:16px">Gagal memuat detail rekap: ${err.message}</td></tr>`;
+    }
+  },
+
+  viewEmployeeRekap(userId) {
+    const empSelect = document.getElementById('adminRekapEmployeeSelect');
+    if (empSelect) {
+      empSelect.value = String(userId);
+      this.handleRekapFilterChange();
+    }
+  },
+
+  showAllRekapView() {
+    const empSelect = document.getElementById('adminRekapEmployeeSelect');
+    if (empSelect) {
+      empSelect.value = 'all';
+      this.handleRekapFilterChange();
     }
   },
 
   exportReportCSV() {
-    window.location.href = '/api/reports/export-csv';
+    const monthEl = document.getElementById('adminRekapMonth');
+    const yearEl = document.getElementById('adminRekapYear');
+    const m = monthEl ? monthEl.value : new Date().getMonth() + 1;
+    const y = yearEl ? yearEl.value : new Date().getFullYear();
+    window.location.href = `/api/reports/export-csv?year=${y}&month=${m}`;
+  },
+
+  exportEmployeeCSV() {
+    const monthEl = document.getElementById('adminRekapMonth');
+    const yearEl = document.getElementById('adminRekapYear');
+    const empSelect = document.getElementById('adminRekapEmployeeSelect');
+    const empId = empSelect ? empSelect.value : null;
+
+    if (!empId || empId === 'all') {
+      this.showToast('Pilih karyawan terlebih dahulu.', 'warning');
+      return;
+    }
+
+    const m = monthEl ? monthEl.value : new Date().getMonth() + 1;
+    const y = yearEl ? yearEl.value : new Date().getFullYear();
+    window.location.href = `/api/reports/export-employee-csv/${empId}?year=${y}&month=${m}`;
   },
 
   // ========== ADMIN: KELOLA KARYAWAN ==========
